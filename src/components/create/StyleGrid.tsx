@@ -13,7 +13,7 @@ export function StyleGrid() {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold font-display">Choose Your Style</h3>
         <span className="text-xs text-muted">
-          {stylePreviews.filter((p) => !p.loading && p.imageBase64).length}/10 ready
+          {stylePreviews.filter((p) => !p.loading && p.imageB).length}/10 ready
         </span>
       </div>
 
@@ -22,7 +22,7 @@ export function StyleGrid() {
           const preview = stylePreviews.find((p) => p.styleId === style.id);
           const isSelected = selectedStyle === style.id;
           const isLoading = preview?.loading ?? true;
-          const hasImage = !!preview?.imageBase64;
+          const hasImage = !!preview?.imageB;
 
           return (
             <Card
@@ -42,7 +42,7 @@ export function StyleGrid() {
                   </div>
                 ) : hasImage ? (
                   <img
-                    src={`data:image/png;base64,${preview!.imageBase64}`}
+                    src={`data:image/png;base64,${preview!.imageB}`}
                     alt={style.name}
                     className="w-full h-full object-cover"
                   />

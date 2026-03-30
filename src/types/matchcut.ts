@@ -46,7 +46,8 @@ export interface MatchCutStyle {
 
 export interface StylePreview {
   styleId: MatchCutStyleId;
-  imageBase64: string | null;
+  imageA: string | null;  // Scene A — user's scene
+  imageB: string | null;  // Scene B — match target
   loading: boolean;
   error?: string;
 }

@@ -56,7 +56,7 @@ export default function CreatePage() {
     store.setStylePreviews(
       MATCH_CUT_STYLES.map((s) => ({
         styleId: s.id,
-        imageBase64: null,
+        imageA: null, imageB: null,
         loading: true,
       })),
     );
@@ -75,7 +75,7 @@ export default function CreatePage() {
       store.setStylePreviews(
         MATCH_CUT_STYLES.map((s) => ({
           styleId: s.id,
-          imageBase64: null,
+          imageA: null, imageB: null,
           loading: false,
           error: "Failed",
         })),

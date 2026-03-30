@@ -32,34 +32,45 @@ Be cinematic and creative. Think like a film director composing the perfect matc
 
 User's description: `;
 
-// ── Style Generation Prompts ──
-// Each style gets a DIFFERENT match target and a clear visual direction.
+// ── Scene A Prompt — generates the user's original scene as a standalone image ──
 
-export function getStylePrompt(
+export function getSceneAPrompt(analysis: MatchCutAnalysis): string {
+  return `Generate a single photorealistic cinematic image of this scene:
+
+${analysis.subject}
+
+Style: Cinematic film still, 16:9 aspect ratio, rich color grading.
+Mood: ${analysis.mood}
+Dominant colors: ${analysis.dominantColors.join(", ")}
+Key shapes: ${analysis.shapes.join(", ")}
+
+RULES:
+- ONE single scene, NOT a split or collage
+- Photorealistic, like a frame from a film
+- NO text, NO watermarks, NO UI elements
+- Landscape 16:9 orientation`;
+}
+
+// ── Scene B Prompt — generates the match cut target scene ──
+
+export function getSceneBPrompt(
   analysis: MatchCutAnalysis,
-  styleName: string,
-  styleDescription: string,
   styleIndex: number,
 ): string {
-  // Rotate through match targets so each style shows a different scene B
   const targetIndex = styleIndex % analysis.suggestedMatchTargets.length;
-  const sceneB = analysis.suggestedMatchTargets[targetIndex];
+  const target = analysis.suggestedMatchTargets[targetIndex];
 
-  return `Generate a single photorealistic cinematic image.
+  return `Generate a single photorealistic cinematic image of this scene:
 
-The image shows a SPLIT COMPOSITION — the left half shows one scene, the right half shows another scene, with a smooth visual transition between them in the center.
+${target}
 
-LEFT HALF (Scene A): ${analysis.subject}
-RIGHT HALF (Scene B): ${sceneB}
+This scene should visually connect to: "${analysis.subject}"
+The connection is through matching ${analysis.shapes[0] || "shapes"} and ${analysis.mood} mood.
+Color palette should echo: ${analysis.dominantColors.join(", ")}
 
-The transition between the two halves uses the "${styleName}" technique: ${styleDescription}
-
-IMPORTANT RULES:
-- Photorealistic quality, like a frame from a Hollywood film
-- 16:9 aspect ratio, landscape orientation
-- The split/transition should be clearly visible and dramatic
-- Rich cinematic color grading matching the mood: ${analysis.mood}
-- Dominant colors: ${analysis.dominantColors.join(", ")}
-- NO text, NO watermarks, NO UI elements, NO borders
-- The two scenes should feel connected through the transition`;
+RULES:
+- ONE single scene, NOT a split or collage
+- Photorealistic, like a frame from a film
+- NO text, NO watermarks, NO UI elements
+- Landscape 16:9 orientation`;
 }

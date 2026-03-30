@@ -90,7 +90,7 @@ export default function Home() {
 
   async function generateStyles(a: MatchCutAnalysis) {
     setStylePreviews(
-      MATCH_CUT_STYLES.map((s) => ({ styleId: s.id, imageBase64: null, loading: true })),
+      MATCH_CUT_STYLES.map((s) => ({ styleId: s.id, imageA: null, imageB: null, loading: true })),
     );
 
     try {
@@ -107,7 +107,8 @@ export default function Home() {
       setStylePreviews(
         MATCH_CUT_STYLES.map((s) => ({
           styleId: s.id,
-          imageBase64: null,
+          imageA: null,
+          imageB: null,
           loading: false,
           error: "Failed",
         })),
@@ -280,14 +281,14 @@ export default function Home() {
             {/* Style Grid */}
             <div>
               <p className="text-sm text-[#8A8A9A] mb-3">
-                {stylePreviews.filter(p => !p.loading && p.imageBase64).length} of 10 styles generated
+                {stylePreviews.filter(p => !p.loading && p.imageB).length} of 10 styles generated
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                 {MATCH_CUT_STYLES.map((style) => {
                   const preview = stylePreviews.find((p) => p.styleId === style.id);
                   const isSelected = selectedStyle === style.id;
                   const isLoading = preview?.loading ?? true;
-                  const hasImage = !!preview?.imageBase64;
+                  const hasImage = !!preview?.imageB;
 
                   return (
                     <button
@@ -307,7 +308,7 @@ export default function Home() {
                           </div>
                         ) : hasImage ? (
                           <img
-                            src={`data:image/png;base64,${preview!.imageBase64}`}
+                            src={`data:image/png;base64,${preview!.imageB}`}
                             alt={style.name}
                             className="w-full h-full object-cover"
                           />
@@ -350,10 +351,8 @@ export default function Home() {
         {/* ═══ PREVIEW STEP ═══ */}
         {step === "preview" && selectedStyle && (() => {
           const preview = stylePreviews.find(p => p.styleId === selectedStyle);
-          const sceneA = preview?.imageBase64 || "";
-          // Use a different style preview as scene B, or same if only one
-          const otherPreview = stylePreviews.find(p => p.styleId !== selectedStyle && p.imageBase64);
-          const sceneB = otherPreview?.imageBase64 || sceneA;
+          const sceneA = preview?.imageA || "";
+          const sceneB = preview?.imageB || "";
           const transition = STYLE_TO_TRANSITION[selectedStyle];
           const styleName = MATCH_CUT_STYLES.find(s => s.id === selectedStyle)?.name || "";
 
