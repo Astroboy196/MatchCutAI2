@@ -81,14 +81,14 @@ export default function Home() {
       const data: MatchCutAnalysis = await res.json();
       setAnalysis(data);
       setStep("styles");
-      generateStyles(data);
+      generateStyles(data, inputMode === "text" ? textInput : "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setStep("input");
     }
   }
 
-  async function generateStyles(a: MatchCutAnalysis) {
+  async function generateStyles(a: MatchCutAnalysis, originalText: string) {
     setStylePreviews(
       MATCH_CUT_STYLES.map((s) => ({ styleId: s.id, imageA: null, imageB: null, loading: true })),
     );
@@ -97,7 +97,7 @@ export default function Home() {
       const res = await fetch("/api/ai/styles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ analysis: a }),
+        body: JSON.stringify({ analysis: a, originalText }),
       });
 
       if (!res.ok) throw new Error("Style generation failed");

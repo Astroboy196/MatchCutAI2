@@ -6,14 +6,18 @@ import type { MatchCutAnalysis } from "@/types/matchcut";
 
 export async function POST(req: NextRequest) {
   try {
-    const { analysis } = (await req.json()) as { analysis: MatchCutAnalysis };
+    const { analysis, originalText } = (await req.json()) as {
+      analysis: MatchCutAnalysis;
+      originalText?: string;
+    };
 
     if (!analysis) {
       return NextResponse.json({ error: "Missing analysis" }, { status: 400 });
     }
 
     // Generate Scene A once (same for all styles)
-    const sceneAPrompt = getSceneAPrompt(analysis);
+    // Use original user text if available — it's more accurate than AI's reinterpretation
+    const sceneAPrompt = getSceneAPrompt(analysis, originalText);
     const sceneAImage = await geminiImageFromText(sceneAPrompt);
 
     // Generate Scene B for each style in parallel (different match target per style)

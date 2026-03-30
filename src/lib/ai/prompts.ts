@@ -34,21 +34,24 @@ User's description: `;
 
 // ── Scene A Prompt — generates the user's original scene as a standalone image ──
 
-export function getSceneAPrompt(analysis: MatchCutAnalysis): string {
-  return `Generate a single photorealistic cinematic image of this scene:
+export function getSceneAPrompt(analysis: MatchCutAnalysis, originalText?: string): string {
+  // Use the user's exact words if available, fall back to AI analysis
+  const sceneDescription = originalText?.trim() || analysis.subject;
 
-${analysis.subject}
+  return `Generate a single photorealistic cinematic image of EXACTLY this scene:
 
-Style: Cinematic film still, 16:9 aspect ratio, rich color grading.
+"${sceneDescription}"
+
 Mood: ${analysis.mood}
-Dominant colors: ${analysis.dominantColors.join(", ")}
-Key shapes: ${analysis.shapes.join(", ")}
+Color palette: ${analysis.dominantColors.join(", ")}
 
-RULES:
-- ONE single scene, NOT a split or collage
-- Photorealistic, like a frame from a film
-- NO text, NO watermarks, NO UI elements
-- Landscape 16:9 orientation`;
+IMPORTANT RULES:
+- Generate EXACTLY what is described above — do not change, reinterpret, or add elements
+- ONE single scene, NOT a split, collage, or side-by-side
+- Photorealistic, like a frame from a Hollywood film
+- 16:9 landscape orientation
+- Cinematic color grading
+- NO text, NO watermarks, NO UI elements, NO borders`;
 }
 
 // ── Scene B Prompt — generates the match cut target scene ──
