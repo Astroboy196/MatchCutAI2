@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import { MATCH_CUT_STYLES } from "@/lib/ai/styles";
+import { STYLE_TO_TRANSITION } from "@/lib/remotion/style-map";
 import type { MatchCutAnalysis, MatchCutStyleId, StylePreview } from "@/types/matchcut";
+import type { VideoFormat } from "@/lib/remotion/types";
+
+const MatchCutPlayer = lazy(() => import("@/components/video/MatchCutPlayer").then(m => ({ default: m.MatchCutPlayer })));
 
 type Step = "input" | "analyzing" | "styles" | "preview";
 type InputMode = "text" | "image" | "video";
@@ -17,6 +21,7 @@ export default function Home() {
   const [stylePreviews, setStylePreviews] = useState<StylePreview[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<MatchCutStyleId | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [format, setFormat] = useState<VideoFormat>("16:9");
 
   const canAnalyze =
     (inputMode === "text" && textInput.trim().length > 0) ||
@@ -343,23 +348,78 @@ export default function Home() {
         )}
 
         {/* ═══ PREVIEW STEP ═══ */}
-        {step === "preview" && (
-          <div className="w-full max-w-xl text-center space-y-6">
-            <p className="text-xl font-semibold">
-              {MATCH_CUT_STYLES.find((s) => s.id === selectedStyle)?.name}
-            </p>
-            <p className="text-sm text-[#8A8A9A]">
-              Video rendering coming next (Remotion).
-            </p>
-            <button
-              type="button"
-              onClick={() => setStep("styles")}
-              className="text-sm text-[#8A8A9A] hover:text-white transition-colors cursor-pointer"
-            >
-              Back to styles
-            </button>
-          </div>
-        )}
+        {step === "preview" && selectedStyle && (() => {
+          const preview = stylePreviews.find(p => p.styleId === selectedStyle);
+          const sceneA = preview?.imageBase64 || "";
+          // Use a different style preview as scene B, or same if only one
+          const otherPreview = stylePreviews.find(p => p.styleId !== selectedStyle && p.imageBase64);
+          const sceneB = otherPreview?.imageBase64 || sceneA;
+          const transition = STYLE_TO_TRANSITION[selectedStyle];
+          const styleName = MATCH_CUT_STYLES.find(s => s.id === selectedStyle)?.name || "";
+
+          return (
+            <div className="w-full max-w-3xl space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-semibold">{styleName}</p>
+                  <p className="text-xs text-[#8A8A9A]">5 seconds, 30fps, {transition}</p>
+                </div>
+                <div className="flex gap-1 p-0.5 bg-[#121218] rounded-lg border border-[#2A2A3A]">
+                  {(["16:9", "9:16", "1:1"] as VideoFormat[]).map(f => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setFormat(f)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-all ${
+                        format === f ? "bg-white text-black" : "text-[#8A8A9A] hover:text-white"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Player */}
+              {sceneA ? (
+                <Suspense fallback={
+                  <div className="w-full aspect-video bg-[#121218] rounded-2xl border border-[#2A2A3A] flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-[#6C3CE0]/30 border-t-[#6C3CE0] rounded-full animate-spin" />
+                  </div>
+                }>
+                  <MatchCutPlayer
+                    sceneA={sceneA}
+                    sceneB={sceneB}
+                    transition={transition}
+                    format={format}
+                  />
+                </Suspense>
+              ) : (
+                <div className="w-full aspect-video bg-[#121218] rounded-2xl border border-[#2A2A3A] flex items-center justify-center">
+                  <p className="text-sm text-[#555]">No preview available</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setStep("styles")}
+                  className="text-xs text-[#8A8A9A] hover:text-white transition-colors cursor-pointer"
+                >
+                  Back to styles
+                </button>
+                <button
+                  type="button"
+                  className="px-8 py-3 bg-white text-black rounded-xl text-sm font-semibold hover:bg-[#e5e5e5] transition-all cursor-pointer"
+                >
+                  Export MP4 (coming soon)
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </main>
     </div>
   );

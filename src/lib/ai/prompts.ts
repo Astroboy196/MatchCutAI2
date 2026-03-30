@@ -10,7 +10,7 @@ export const ANALYZE_IMAGE_PROMPT = `You are a cinematic match cut expert. Analy
   "mood": "one word mood (e.g. joyful, dramatic, serene, mysterious, energetic)",
   "shapes": ["dominant shapes in the scene (e.g. circular, angular, flowing, vertical, horizontal)"],
   "motionDirection": "implied motion direction (e.g. left-to-right, expanding, rising, static, spiraling)",
-  "suggestedMatchTargets": ["5 creative match cut target scenes that would create a visually satisfying transition from this image"],
+  "suggestedMatchTargets": ["5 creative match cut target scenes that would create a visually satisfying transition from this image. Each should be a DIFFERENT type of scene — vary widely between nature, urban, abstract, human, object close-ups."],
   "keywords": ["5 visual keywords describing the image"]
 }
 
@@ -24,7 +24,7 @@ export const ANALYZE_TEXT_PROMPT = `You are a cinematic match cut expert. The us
   "mood": "one word mood",
   "shapes": ["dominant shapes you'd expect in this scene"],
   "motionDirection": "implied motion direction",
-  "suggestedMatchTargets": ["5 creative match cut target scenes"],
+  "suggestedMatchTargets": ["5 creative match cut target scenes. Each MUST be a completely different type of scene — one nature, one urban, one abstract, one human/body, one object close-up."],
   "keywords": ["5 visual keywords"]
 }
 
@@ -33,25 +33,33 @@ Be cinematic and creative. Think like a film director composing the perfect matc
 User's description: `;
 
 // ── Style Generation Prompts ──
+// Each style gets a DIFFERENT match target and a clear visual direction.
 
 export function getStylePrompt(
   analysis: MatchCutAnalysis,
   styleName: string,
   styleDescription: string,
+  styleIndex: number,
 ): string {
-  return `Create a cinematic match cut image pair. This is a split-frame composition showing Scene A transitioning into Scene B.
+  // Rotate through match targets so each style shows a different scene B
+  const targetIndex = styleIndex % analysis.suggestedMatchTargets.length;
+  const sceneB = analysis.suggestedMatchTargets[targetIndex];
 
-SCENE A (left side): ${analysis.subject}
-- Colors: ${analysis.dominantColors.join(", ")}
-- Mood: ${analysis.mood}
-- Key shapes: ${analysis.shapes.join(", ")}
+  return `Generate a single photorealistic cinematic image.
 
-SCENE B (right side): ${analysis.suggestedMatchTargets[0]}
+The image shows a SPLIT COMPOSITION — the left half shows one scene, the right half shows another scene, with a smooth visual transition between them in the center.
 
-MATCH CUT STYLE: "${styleName}" — ${styleDescription}
+LEFT HALF (Scene A): ${analysis.subject}
+RIGHT HALF (Scene B): ${sceneB}
 
-The image should show both scenes in a single frame with a visible transition point in the center.
-The transition should demonstrate the "${styleName}" match cut technique.
-Aspect ratio: 16:9. Cinematic color grading, professional film quality.
-No text, no watermarks, no UI elements.`;
+The transition between the two halves uses the "${styleName}" technique: ${styleDescription}
+
+IMPORTANT RULES:
+- Photorealistic quality, like a frame from a Hollywood film
+- 16:9 aspect ratio, landscape orientation
+- The split/transition should be clearly visible and dramatic
+- Rich cinematic color grading matching the mood: ${analysis.mood}
+- Dominant colors: ${analysis.dominantColors.join(", ")}
+- NO text, NO watermarks, NO UI elements, NO borders
+- The two scenes should feel connected through the transition`;
 }

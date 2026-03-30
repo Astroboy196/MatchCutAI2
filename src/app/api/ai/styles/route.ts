@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
     }
 
     const results = await Promise.allSettled(
-      MATCH_CUT_STYLES.map(async (style) => {
-        const prompt = getStylePrompt(analysis, style.name, style.description);
+      MATCH_CUT_STYLES.map(async (style, index) => {
+        const prompt = getStylePrompt(analysis, style.name, style.description, index);
         const imageBase64 = await geminiImageFromText(prompt);
         return { styleId: style.id, imageBase64 };
       }),
