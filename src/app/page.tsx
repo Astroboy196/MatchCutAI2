@@ -192,9 +192,10 @@ export default function Home() {
                     handleAnalyze();
                   }
                 }}
-                placeholder="A coffee cup on marble, morning light hitting the rim..."
+                placeholder="Describe a scene... e.g. A coffee cup on marble, morning light hitting the rim"
                 rows={4}
-                className="w-full bg-surface border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted/40 resize-none focus:outline-none focus:border-primary/40 transition-colors"
+                autoFocus
+                className="w-full bg-[#15151f] border border-[#333] rounded-2xl px-5 py-4 text-white placeholder:text-[#666] resize-none focus:outline-none focus:border-[#6C3CE0] transition-colors text-base"
               />
             )}
 
@@ -272,15 +273,15 @@ export default function Home() {
             <button
               onClick={handleAnalyze}
               disabled={!canAnalyze || step === "analyzing"}
-              className="w-full py-3.5 bg-foreground text-background rounded-xl text-sm font-medium disabled:opacity-20 hover:opacity-90 transition-opacity cursor-pointer"
+              className="w-full py-4 bg-white text-black rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90 transition-all cursor-pointer"
             >
               {step === "analyzing" ? (
                 <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
-                  Analyzing...
+                  <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  Analyzing with Gemini...
                 </span>
               ) : (
-                "Generate"
+                "Generate Match Cuts"
               )}
             </button>
 
