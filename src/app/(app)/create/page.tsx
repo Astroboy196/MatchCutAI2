@@ -1,48 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 import { InputSelector } from "@/components/create/InputSelector";
 import { TextInput } from "@/components/create/TextInput";
 import { ImageUpload } from "@/components/create/ImageUpload";
 import { VideoUpload } from "@/components/create/VideoUpload";
 import { AnalysisCard } from "@/components/create/AnalysisCard";
 import { StyleGrid } from "@/components/create/StyleGrid";
-import { ProgressTimeline } from "@/components/create/ProgressTimeline";
 import { useCreateStore } from "@/stores/createStore";
 import type { MatchCutAnalysis, StylePreview } from "@/types/matchcut";
 import { MATCH_CUT_STYLES } from "@/lib/ai/styles";
 
 export default function CreatePage() {
-  const {
-    step,
-    setStep,
-    inputType,
-    textInput,
-    imageBase64,
-    imageMimeType,
-    analysis,
-    setAnalysis,
-    setStylePreviews,
-    selectedStyle,
-    reset,
-  } = useCreateStore();
-
+  const store = useCreateStore();
   const [error, setError] = useState<string | null>(null);
 
   const canAnalyze =
-    (inputType === "text" && textInput.trim().length > 5) ||
-    ((inputType === "image" || inputType === "video") && !!imageBase64);
+    (store.inputType === "text" && store.textInput.trim().length > 5) ||
+    ((store.inputType === "image" || store.inputType === "video") &&
+      !!store.imageBase64);
 
   async function handleAnalyze() {
     setError(null);
-    setStep("analyzing");
+    store.setStep("analyzing");
 
     try {
       const body =
-        inputType === "text"
-          ? { type: "text" as const, text: textInput }
-          : { type: inputType, imageBase64, imageMimeType };
+        store.inputType === "text"
+          ? { type: "text" as const, text: store.textInput }
+          : {
+              type: store.inputType,
+              imageBase64: store.imageBase64,
+              imageMimeType: store.imageMimeType,
+            };
 
       const res = await fetch("/api/ai/analyze", {
         method: "POST",
@@ -52,22 +43,23 @@ export default function CreatePage() {
 
       if (!res.ok) throw new Error("Analysis failed");
       const data: MatchCutAnalysis = await res.json();
-      setAnalysis(data);
-      setStep("styles");
+      store.setAnalysis(data);
+      store.setStep("styles");
       generateStyles(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-      setStep("input");
+      store.setStep("input");
     }
   }
 
   async function generateStyles(analysisData: MatchCutAnalysis) {
-    const loading: StylePreview[] = MATCH_CUT_STYLES.map((s) => ({
-      styleId: s.id,
-      imageBase64: null,
-      loading: true,
-    }));
-    setStylePreviews(loading);
+    store.setStylePreviews(
+      MATCH_CUT_STYLES.map((s) => ({
+        styleId: s.id,
+        imageBase64: null,
+        loading: true,
+      })),
+    );
 
     try {
       const res = await fetch("/api/ai/styles", {
@@ -78,9 +70,9 @@ export default function CreatePage() {
 
       if (!res.ok) throw new Error("Style generation failed");
       const { previews } = await res.json();
-      setStylePreviews(previews);
+      store.setStylePreviews(previews);
     } catch {
-      setStylePreviews(
+      store.setStylePreviews(
         MATCH_CUT_STYLES.map((s) => ({
           styleId: s.id,
           imageBase64: null,
@@ -92,40 +84,42 @@ export default function CreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="text-white text-xs font-bold">M</span>
-            </div>
-            <h1 className="text-lg font-display font-semibold">Matchhook</h1>
-          </div>
-          <ProgressTimeline />
-        </div>
+      <header className="px-4 sm:px-6 py-4 flex items-center justify-between border-b border-border/50">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5"
+        >
+          <div className="w-7 h-7 rounded-md bg-gradient-to-br from-primary to-accent" />
+          <span className="text-base font-display font-semibold tracking-tight">
+            Matchhook
+          </span>
+        </Link>
+
+        {store.step !== "input" && store.step !== "analyzing" && (
+          <button
+            onClick={() => {
+              store.reset();
+              store.setStep("input");
+            }}
+            className="text-xs text-muted hover:text-foreground transition-colors cursor-pointer"
+          >
+            New
+          </button>
+        )}
       </header>
 
-      {/* Main */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-        {/* Step: Input */}
-        {(step === "input" || step === "analyzing") && (
-          <div className="max-w-xl mx-auto space-y-6">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-display font-bold">
-                Create a Match Cut
-              </h2>
-              <p className="text-sm text-muted">
-                Start with text, an image, or a video. Our AI will analyze it and generate
-                10 cinematic match cut styles.
-              </p>
-            </div>
-
+      {/* Content */}
+      <main className="flex-1 px-4 sm:px-6 py-8 max-w-5xl mx-auto w-full">
+        {/* ─── Input Step ─── */}
+        {(store.step === "input" || store.step === "analyzing") && (
+          <div className="max-w-xl mx-auto space-y-5">
             <InputSelector />
 
-            {inputType === "text" && <TextInput />}
-            {inputType === "image" && <ImageUpload />}
-            {inputType === "video" && <VideoUpload />}
+            {store.inputType === "text" && <TextInput />}
+            {store.inputType === "image" && <ImageUpload />}
+            {store.inputType === "video" && <VideoUpload />}
 
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-sm text-red-400">
@@ -133,62 +127,56 @@ export default function CreatePage() {
               </div>
             )}
 
-            <Button
-              size="lg"
-              className="w-full"
-              disabled={!canAnalyze || step === "analyzing"}
+            <button
               onClick={handleAnalyze}
+              disabled={!canAnalyze || store.step === "analyzing"}
+              className="w-full py-3.5 bg-foreground text-background rounded-xl text-sm font-medium disabled:opacity-20 hover:opacity-90 transition-opacity cursor-pointer"
             >
-              {step === "analyzing" ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              {store.step === "analyzing" ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
                   Analyzing...
                 </span>
               ) : (
-                "Analyze & Generate Styles"
+                "Generate Match Cuts"
               )}
-            </Button>
+            </button>
           </div>
         )}
 
-        {/* Step: Styles */}
-        {step === "styles" && analysis && (
+        {/* ─── Styles Step ─── */}
+        {store.step === "styles" && store.analysis && (
           <div className="space-y-8">
-            <div className="max-w-xl mx-auto">
-              <AnalysisCard analysis={analysis} />
-            </div>
-
+            <AnalysisCard analysis={store.analysis} />
             <StyleGrid />
 
-            <div className="flex items-center justify-between max-w-xl mx-auto">
-              <Button variant="ghost" onClick={() => { reset(); setStep("input"); }}>
-                Start Over
-              </Button>
-              <Button
-                size="lg"
-                disabled={!selectedStyle}
-                onClick={() => setStep("preview")}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => store.setStep("preview")}
+                disabled={!store.selectedStyle}
+                className="px-8 py-3 bg-foreground text-background rounded-xl text-sm font-medium disabled:opacity-20 hover:opacity-90 transition-opacity cursor-pointer"
               >
-                Continue with Style
-              </Button>
+                Use This Style
+              </button>
             </div>
           </div>
         )}
 
-        {/* Step: Preview */}
-        {step === "preview" && (
-          <div className="max-w-xl mx-auto text-center space-y-6">
-            <h2 className="text-2xl font-display font-bold">Preview & Export</h2>
-            <p className="text-sm text-muted">
-              Remotion video preview coming in Phase 3.
-              Selected style: <span className="text-primary font-medium">{selectedStyle}</span>
+        {/* ─── Preview Step (placeholder) ─── */}
+        {store.step === "preview" && (
+          <div className="max-w-xl mx-auto space-y-6 text-center py-20">
+            <p className="text-2xl font-display font-semibold">
+              {store.selectedStyle}
             </p>
-            <div className="flex gap-3 justify-center">
-              <Button variant="secondary" onClick={() => setStep("styles")}>
-                Back to Styles
-              </Button>
-              <Button>Export Video (Coming Soon)</Button>
-            </div>
+            <p className="text-sm text-muted">
+              Video preview + export coming in Phase 3 (Remotion).
+            </p>
+            <button
+              onClick={() => store.setStep("styles")}
+              className="text-sm text-muted hover:text-foreground transition-colors cursor-pointer"
+            >
+              Back to styles
+            </button>
           </div>
         )}
       </main>
